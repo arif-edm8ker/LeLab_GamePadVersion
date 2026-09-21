@@ -17,7 +17,7 @@ LeLab launcher.
 
 Default mode starts FastAPI on :8000 and serves the committed frontend/dist
 bundle from the same process. Dev mode starts Vite on :8080 and uvicorn
---reload on :8000.
+--reload on :8000. Override the ports with --port / --frontend-port.
 """
 
 from __future__ import annotations
@@ -449,6 +449,18 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Start Vite hot reload on :8080 plus uvicorn --reload on :8000.",
     )
     parser.add_argument(
+        "--port",
+        type=int,
+        default=BACKEND_PORT,
+        help=f"Backend port; also serves the UI outside dev mode (default: {BACKEND_PORT}).",
+    )
+    parser.add_argument(
+        "--frontend-port",
+        type=int,
+        default=FRONTEND_DEV_PORT,
+        help=f"Vite dev server port, used with --dev (default: {FRONTEND_DEV_PORT}).",
+    )
+    parser.add_argument(
         "--rebuild",
         action="store_true",
         help="Rebuild frontend/dist before starting production mode.",
@@ -461,14 +473,21 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--stop",
         action="store_true",
-        help="Stop a running LeLab (free ports 8000/8080) and exit.",
+        help="Stop a running LeLab (free ports 8000/8080, or those given by --port/--frontend-port) and exit.",
     )
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    global BACKEND_PORT, FRONTEND_DEV_PORT
     parser = _build_parser()
     args = parser.parse_args(argv)
+
+    if args.dev and args.port == args.frontend_port:
+        parser.error("--port and --frontend-port must differ in dev mode.")
+    # Every helper reads these module-level ports, so --stop also targets them.
+    BACKEND_PORT = args.port
+    FRONTEND_DEV_PORT = args.frontend_port
 
     if args.stop:
         _run_stop()

@@ -73,6 +73,16 @@ lelab-gamepad
 
 **To update to the latest version** later, run the Quick Start one-liner above again.
 
+**To use different ports** (the defaults are 8000 for the app, and 8080 for the frontend in
+`--dev` mode), pass them as flags:
+
+```powershell
+lelab-gamepad --port 9000
+lelab-gamepad --dev --port 9000 --frontend-port 9090
+```
+
+If you changed the ports, pass the same flags to stop LeLab: `lelab-gamepad --stop --port 9000`.
+
 If this fails for any reason, or you want to see/edit the actual source code, follow the manual
 setup below instead: it's the same install, just done step by step so you can see what's
 happening at each stage.

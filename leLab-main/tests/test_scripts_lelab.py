@@ -436,3 +436,99 @@ def test_dev_launcher_reports_frontend_exit_before_ready(
 
     assert "Frontend exited early with code 7" in caplog.text
     assert "Check the Vite output above" in caplog.text
+
+
+@pytest.fixture
+def launcher_main(monkeypatch: pytest.MonkeyPatch):
+    """main() with the run modes mocked; module-level ports restored afterwards."""
+    import lelab.scripts.lelab as launcher
+
+    monkeypatch.setattr(launcher, "BACKEND_PORT", launcher.BACKEND_PORT)
+    monkeypatch.setattr(launcher, "FRONTEND_DEV_PORT", launcher.FRONTEND_DEV_PORT)
+    monkeypatch.setattr(launcher, "_run_dev", MagicMock())
+    monkeypatch.setattr(launcher, "_run_prod", MagicMock())
+    return launcher
+
+
+def test_ports_default_to_8000_and_8080(launcher_main) -> None:
+    launcher_main.main([])
+
+    assert launcher_main.BACKEND_PORT == 8000
+    assert launcher_main.FRONTEND_DEV_PORT == 8080
+
+
+def test_port_flags_override_ports(launcher_main) -> None:
+    launcher_main.main(["--dev", "--port", "9000", "--frontend-port", "9090"])
+
+    launcher_main._run_dev.assert_called_once_with(no_open=False)
+    assert launcher_main.BACKEND_PORT == 9000
+    assert launcher_main.FRONTEND_DEV_PORT == 9090
+
+
+
+
+
+@pytest.mark.parametrize("argv", [["--port", "0"], ["--port", "70000"], ["--port", "x"]])
+def test_invalid_port_flag_is_rejected(launcher_main, argv: list[str]) -> None:
+    with pytest.raises(SystemExit):
+        launcher_main.main(argv)
+
+    launcher_main._run_prod.assert_not_called()
+
+
+def test_dev_mode_rejects_identical_ports(launcher_main) -> None:
+    with pytest.raises(SystemExit):
+        launcher_main.main(["--dev", "--port", "9000", "--frontend-port", "9000"])
+
+    launcher_main._run_dev.assert_not_called()
+
+
+def test_prod_browser_url_points_ui_at_backend_port(monkeypatch: pytest.MonkeyPatch) -> None:
+    import lelab.scripts.lelab as launcher
+
+    opened: list[str] = []
+    monkeypatch.setattr(launcher, "_is_port_open", lambda _port: True)
+    monkeypatch.setattr(launcher, "_open_browser_url", lambda url, no_open: opened.append(url))
+
+    launcher._open_browser_when_ready(9000, no_open=False)
+
+    assert opened == ["http://localhost:9000/?api=http://localhost:9000"]
+
+
+def test_dev_launcher_uses_custom_ports(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import lelab.scripts.lelab as launcher
+
+    frontend = tmp_path / "frontend"
+    frontend.mkdir()
+    started: list[list[str]] = []
+    opened: list[str] = []
+
+    def fake_start_process(name, command, cwd, env=None):
+        started.append(list(command))
+        return FakeProcess()
+
+    def stop_after_start(_processes):
+        raise SystemExit(0)
+
+    monkeypatch.setattr(launcher, "BACKEND_PORT", 9000)
+    monkeypatch.setattr(launcher, "FRONTEND_DEV_PORT", 9090)
+    monkeypatch.setattr(launcher, "FRONTEND_PATH", frontend)
+    monkeypatch.setattr(launcher, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(launcher, "_require_command", lambda _command: _command)
+    monkeypatch.setattr(launcher, "_ensure_port_available", lambda _name, _port: None)
+    monkeypatch.setattr(launcher, "_ensure_frontend_deps", lambda: None)
+    monkeypatch.setattr(launcher, "_wait_for_port", lambda _port, timeout=30: True)
+    monkeypatch.setattr(launcher, "_start_process", fake_start_process)
+    monkeypatch.setattr(launcher, "_install_signal_handlers", lambda: None)
+    monkeypatch.setattr(launcher, "_monitor_processes", stop_after_start)
+    monkeypatch.setattr(launcher, "_open_browser_url", lambda url, no_open: opened.append(url))
+
+    with pytest.raises(SystemExit):
+        launcher._run_dev(no_open=False)
+
+    assert started[0][-2:] == ["--port", "9090"]
+    assert started[1][started[1].index("--port") + 1] == "9000"
+    assert opened == ["http://localhost:9090/?api=http://localhost:9000"]
