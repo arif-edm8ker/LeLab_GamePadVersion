@@ -11,7 +11,7 @@ import { Terminal, ExternalLink, Copy, Check } from "lucide-react";
 
 const ONE_LINER =
   "uv tool install git+https://github.com/huggingface/leLab.git && lelab";
-const LOCAL_URL = "http://localhost:8000/";
+const LOCAL_URL = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/`;
 
 interface UsageInstructionsModalProps {
   open: boolean;

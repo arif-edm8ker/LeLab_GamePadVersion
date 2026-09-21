@@ -9,7 +9,7 @@ interface ApiContextType {
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
 
 const STORAGE_KEY = "lelab.apiBaseUrl";
-const DEFAULT_LOCALHOST = "http://localhost:8000";
+const DEFAULT_LOCALHOST = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const httpToWs = (url: string): string => url.replace(/^http(s?):/, "ws$1:");
 
