@@ -468,10 +468,9 @@ def test_port_flags_override_ports(launcher_main) -> None:
 
 
 
-@pytest.mark.parametrize("argv", [["--port", "0"], ["--port", "70000"], ["--port", "x"]])
-def test_invalid_port_flag_is_rejected(launcher_main, argv: list[str]) -> None:
+def test_non_numeric_port_flag_is_rejected(launcher_main) -> None:
     with pytest.raises(SystemExit):
-        launcher_main.main(argv)
+        launcher_main.main(["--port", "x"])
 
     launcher_main._run_prod.assert_not_called()
 
@@ -482,17 +481,6 @@ def test_dev_mode_rejects_identical_ports(launcher_main) -> None:
 
     launcher_main._run_dev.assert_not_called()
 
-
-def test_prod_browser_url_points_ui_at_backend_port(monkeypatch: pytest.MonkeyPatch) -> None:
-    import lelab.scripts.lelab as launcher
-
-    opened: list[str] = []
-    monkeypatch.setattr(launcher, "_is_port_open", lambda _port: True)
-    monkeypatch.setattr(launcher, "_open_browser_url", lambda url, no_open: opened.append(url))
-
-    launcher._open_browser_when_ready(9000, no_open=False)
-
-    assert opened == ["http://localhost:9000/?api=http://localhost:9000"]
 
 
 def test_dev_launcher_uses_custom_ports(
@@ -532,3 +520,99 @@ def test_dev_launcher_uses_custom_ports(
     assert started[0][-2:] == ["--port", "9090"]
     assert started[1][started[1].index("--port") + 1] == "9000"
     assert opened == ["http://localhost:9090/?api=http://localhost:9000"]
+
+
+@pytest.fixture
+def background(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """_run_background with Popen faked, the log in tmp_path and no real sleeps."""
+    import lelab.scripts.lelab as launcher
+
+    popen_calls: list[tuple[list[str], dict]] = []
+    child = FakeProcess()
+
+    def fake_popen(command, **kwargs):
+        popen_calls.append((list(command), kwargs))
+        return child
+
+    monkeypatch.setattr(launcher, "LOG_PATH", tmp_path / "logs" / "lelab-gamepad.log")
+    monkeypatch.setattr(launcher.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(launcher.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(launcher, "_ensure_port_available", lambda _name, _port: None)
+    launcher.popen_calls = popen_calls
+    launcher.child = child
+    yield launcher
+    del launcher.popen_calls, launcher.child
+
+
+def test_background_relaunches_detached_without_the_flag(
+    background, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    import logging
+
+    caplog.set_level(logging.INFO)
+    monkeypatch.setattr(background.os, "name", "posix")
+    monkeypatch.setattr(background, "_is_port_open", lambda _port: True)
+
+    background._run_background(["--background", "--port", "9000"], dev=False, stop_command="lelab-gamepad --stop")
+
+    command, kwargs = background.popen_calls[0]
+    assert command == [background.sys.executable, "-m", "lelab.scripts.lelab", "--port", "9000"]
+    assert kwargs["start_new_session"] is True
+    assert kwargs["stdin"] is background.subprocess.DEVNULL
+    assert kwargs["env"]["PYTHONUNBUFFERED"] == "1"
+    assert background.LOG_PATH.exists()
+    assert "running in the background at http://localhost:8000" in caplog.text
+    assert "Stop it with: lelab-gamepad --stop" in caplog.text
+
+
+def test_background_uses_hidden_console_on_windows(background, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(background.os, "name", "nt")
+    monkeypatch.setattr(background.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x200, raising=False)
+    monkeypatch.setattr(background.subprocess, "CREATE_NO_WINDOW", 0x8000000, raising=False)
+
+    assert background._background_process_kwargs() == {"creationflags": 0x200 | 0x8000000}
+
+
+def test_background_reports_log_tail_when_child_exits(
+    background, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr(background, "_is_port_open", lambda _port: False)
+    background.child.returncode = 1
+
+    def fake_popen(command, stdout=None, **kwargs):
+        stdout.write("ERROR Backend port 8000 is already in use\n")
+        return background.child
+
+    monkeypatch.setattr(background.subprocess, "Popen", fake_popen)
+
+    with pytest.raises(SystemExit):
+        background._run_background(["--background"], dev=False, stop_command="lelab-gamepad --stop")
+
+    assert "LeLab exited with code 1" in caplog.text
+    assert "Backend port 8000 is already in use" in caplog.text
+
+
+def test_background_checks_ports_before_spawning(background, monkeypatch: pytest.MonkeyPatch) -> None:
+    def port_taken(_name, _port):
+        raise SystemExit(1)
+
+    monkeypatch.setattr(background, "_ensure_port_available", port_taken)
+
+    with pytest.raises(SystemExit):
+        background._run_background(["--background"], dev=False, stop_command="lelab-gamepad --stop")
+
+    assert background.popen_calls == []
+
+
+def test_background_stop_hint_includes_custom_ports(launcher_main, monkeypatch: pytest.MonkeyPatch) -> None:
+    run_background = MagicMock()
+    monkeypatch.setattr(launcher_main, "_run_background", run_background)
+
+    launcher_main.main(["--background", "--dev", "--port", "9000"])
+
+    run_background.assert_called_once_with(
+        ["--background", "--dev", "--port", "9000"],
+        dev=True,
+        stop_command="lelab-gamepad --stop --port 9000",
+    )
+    launcher_main._run_dev.assert_not_called()

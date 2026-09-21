@@ -83,6 +83,16 @@ lelab-gamepad --dev --port 9000 --frontend-port 9090
 
 If you changed the ports, pass the same flags to stop LeLab: `lelab-gamepad --stop --port 9000`.
 
+**To run it in the background** (so you can close the terminal), add `--background`:
+
+```powershell
+lelab-gamepad --background
+```
+
+It returns once LeLab is up and prints the address. Output goes to
+`~/.cache/lelab-gamepad/lelab-gamepad.log` (on Windows, `C:\Users\<you>\.cache\lelab-gamepad\`),
+which is replaced on each start. Stop it with `lelab-gamepad --stop`.
+
 If this fails for any reason, or you want to see/edit the actual source code, follow the manual
 setup below instead: it's the same install, just done step by step so you can see what's
 happening at each stage.

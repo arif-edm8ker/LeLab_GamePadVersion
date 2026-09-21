@@ -18,6 +18,7 @@ LeLab launcher.
 Default mode starts FastAPI on :8000 and serves the committed frontend/dist
 bundle from the same process. Dev mode starts Vite on :8080 and uvicorn
 --reload on :8000. Override the ports with --port / --frontend-port.
+--background runs either mode detached from the terminal, logging to LOG_PATH.
 """
 
 from __future__ import annotations
@@ -51,6 +52,8 @@ FRONTEND_NODE_MODULES = FRONTEND_PATH / "node_modules"
 HOST = "127.0.0.1"
 BACKEND_PORT = 8000
 FRONTEND_DEV_PORT = 8080
+# Outside the install dir: `uv tool install --reinstall` replaces that.
+LOG_PATH = Path.home() / ".cache" / "lelab-gamepad" / "lelab-gamepad.log"
 
 
 def _fail(message: str) -> NoReturn:
@@ -330,6 +333,56 @@ def _monitor_processes(processes: Sequence[tuple[str, subprocess.Popen]]) -> Non
                 raise SystemExit(returncode)
 
 
+def _background_process_kwargs() -> dict[str, object]:
+    if os.name == "nt":
+        # A hidden console rather than DETACHED_PROCESS: dev mode's npm/uvicorn
+        # children inherit it instead of each popping up a console window.
+        return {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW}
+    return {"start_new_session": True}
+
+
+def _log_tail(lines: int = 20) -> str:
+    try:
+        return "\n".join(LOG_PATH.read_text(errors="replace").splitlines()[-lines:])
+    except OSError:
+        return "(log unavailable)"
+
+
+def _run_background(argv: Sequence[str], *, dev: bool, stop_command: str, timeout: int = 180) -> None:
+    """Relaunch this command detached from the terminal and return once it serves."""
+    # Checked here too: otherwise a port held by another process would read as
+    # "LeLab is up" below while the child fails on it.
+    _ensure_port_available("Backend", BACKEND_PORT)
+    if dev:
+        _ensure_port_available("Frontend", FRONTEND_DEV_PORT)
+
+    command = [sys.executable, "-m", "lelab.scripts.lelab", *(arg for arg in argv if arg != "--background")]
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with LOG_PATH.open("w") as log:
+        process = subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            env={**os.environ, "PYTHONUNBUFFERED": "1"},
+            **_background_process_kwargs(),
+        )
+    logger.info("Starting LeLab in the background (pid %d), logging to %s ...", process.pid, LOG_PATH)
+
+    # Dev mode starts the backend after Vite, so the backend port covers both.
+    for _ in range(timeout):
+        if process.poll() is not None:
+            _fail(f"LeLab exited with code {process.returncode}. Last lines of {LOG_PATH}:\n{_log_tail()}")
+        if _is_port_open(BACKEND_PORT):
+            url = f"http://localhost:{FRONTEND_DEV_PORT if dev else BACKEND_PORT}"
+            logger.info("LeLab is running in the background at %s", url)
+            logger.info("Logs: %s", LOG_PATH)
+            logger.info("Stop it with: %s", stop_command)
+            return
+        time.sleep(1)
+    logger.warning("LeLab is still starting after %ds; follow %s for progress.", timeout, LOG_PATH)
+
+
 def _run_prod(*, no_open: bool = False, rebuild: bool = False) -> None:
     """Serve built frontend from backend on a single port."""
     _ensure_port_available("Backend", BACKEND_PORT)
@@ -466,6 +519,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Rebuild frontend/dist before starting production mode.",
     )
     parser.add_argument(
+        "--background",
+        action="store_true",
+        help="Run detached from the terminal; output goes to a log file. Stop with --stop.",
+    )
+    parser.add_argument(
         "--no-open",
         action="store_true",
         help="Do not open a browser automatically.",
@@ -481,6 +539,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> None:
     global BACKEND_PORT, FRONTEND_DEV_PORT
     parser = _build_parser()
+    argv = list(sys.argv[1:] if argv is None else argv)
     args = parser.parse_args(argv)
 
     if args.dev and args.port == args.frontend_port:
@@ -496,7 +555,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.dev and args.rebuild:
         parser.error("--rebuild is for production mode; dev mode serves from Vite.")
 
-    if args.dev:
+    if args.background:
+        stop_command = "lelab-gamepad --stop"
+        if args.port != parser.get_default("port"):
+            stop_command += f" --port {args.port}"
+        if args.frontend_port != parser.get_default("frontend_port"):
+            stop_command += f" --frontend-port {args.frontend_port}"
+        _run_background(argv, dev=args.dev, stop_command=stop_command)
+    elif args.dev:
         _run_dev(no_open=args.no_open)
     else:
         _run_prod(no_open=args.no_open, rebuild=args.rebuild)
