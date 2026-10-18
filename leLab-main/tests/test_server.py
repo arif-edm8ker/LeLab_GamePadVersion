@@ -81,6 +81,45 @@ def test_delete_calibration_config_rejects_unsafe_name(client: TestClient, unsaf
     assert "Invalid configuration name" in body["message"]
 
 
+def _so101_calibration() -> dict:
+    from lelab.utils.config import SO101_MOTOR_IDS
+
+    return {
+        motor: {"id": motor_id, "drive_mode": 0, "homing_offset": 0, "range_min": 800, "range_max": 3200}
+        for motor, motor_id in SO101_MOTOR_IDS.items()
+    }
+
+
+def test_put_calibration_config_saves_and_reports_existing(client: TestClient, tmp_lerobot_home) -> None:
+    from lelab.utils import config as cfg
+
+    first = client.put("/calibration-configs/robot/browser_arm", json=_so101_calibration())
+    assert first.json()["success"] is True
+    assert (tmp_lerobot_home / "configs" / "so_follower" / "browser_arm.json").exists()
+    assert cfg.FOLLOWER_CONFIG_PATH.startswith(str(tmp_lerobot_home))
+
+    again = client.put("/calibration-configs/robot/browser_arm", json=_so101_calibration())
+    assert again.json() == {
+        "success": False,
+        "exists": True,
+        "message": "A configuration named 'browser_arm' already exists",
+    }
+
+    forced = client.put("/calibration-configs/robot/browser_arm?overwrite=true", json=_so101_calibration())
+    assert forced.json()["success"] is True
+
+
+def test_put_calibration_config_rejects_bad_input(client: TestClient, tmp_lerobot_home) -> None:
+    bad = _so101_calibration()
+    del bad["gripper"]
+    response = client.put("/calibration-configs/teleop/leader_x", json=bad)
+    assert response.json()["success"] is False
+    assert "gripper" in response.json()["message"]
+
+    unsafe = client.put("/calibration-configs/teleop/evil..name", json=_so101_calibration())
+    assert unsafe.json() == {"success": False, "message": "Invalid configuration name"}
+
+
 def _spa_mounted(client: TestClient) -> bool:
     return any(getattr(route, "name", None) == "frontend" for route in client.app.routes)
 

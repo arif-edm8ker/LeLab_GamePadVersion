@@ -194,3 +194,80 @@ def test_with_lelab_tag_dedupes() -> None:
 
     # Caller-supplied LeLab is not duplicated, and order is preserved.
     assert with_lelab_tag(["robotics", LELAB_TAG, "lerobot"]) == ["robotics", LELAB_TAG, "lerobot"]
+
+
+def _so101_calibration() -> dict:
+    """A valid SO-101 calibration in lerobot's JSON layout."""
+    from lelab.utils.config import SO101_MOTOR_IDS
+
+    return {
+        motor: {"id": motor_id, "drive_mode": 0, "homing_offset": -10 * motor_id, "range_min": 800, "range_max": 3200}
+        for motor, motor_id in SO101_MOTOR_IDS.items()
+    }
+
+
+def test_save_calibration_config_writes_lerobot_layout(tmp_lerobot_home: Path) -> None:
+    from lelab.utils import config as cfg
+
+    calibration = _so101_calibration()
+    calibration["gripper"]["extra"] = 1  # unknown fields are dropped
+    cfg.save_calibration_config("robot", "browser_follower", calibration)
+
+    path = Path(cfg.FOLLOWER_CONFIG_PATH) / "browser_follower.json"
+    saved = json.loads(path.read_text())
+    assert saved == _so101_calibration()
+    assert list(saved["gripper"]) == ["id", "drive_mode", "homing_offset", "range_min", "range_max"]
+    assert path.read_text().startswith('{\n    "shoulder_pan": {\n        "id": 1,')
+
+
+def test_save_calibration_config_refuses_to_overwrite_unless_asked(tmp_lerobot_home: Path) -> None:
+    from lelab.utils import config as cfg
+
+    cfg.save_calibration_config("teleop", "leader_a", _so101_calibration())
+    with pytest.raises(FileExistsError):
+        cfg.save_calibration_config("teleop", "leader_a", _so101_calibration())
+
+    updated = _so101_calibration()
+    updated["elbow_flex"]["range_max"] = 3500
+    cfg.save_calibration_config("teleop", "leader_a", updated, overwrite=True)
+    saved = json.loads((Path(cfg.LEADER_CONFIG_PATH) / "leader_a.json").read_text())
+    assert saved["elbow_flex"]["range_max"] == 3500
+
+
+def test_save_calibration_config_attaches_to_robot_record(tmp_lerobot_home: Path) -> None:
+    from lelab.utils import config as cfg
+
+    cfg.save_robot_record("bench_arm", {"input_mode": "gamepad"})
+    cfg.save_calibration_config("robot", "bench_follower", _so101_calibration(), robot_name="bench_arm")
+    assert cfg.get_robot_record("bench_arm")["follower_config"] == "bench_follower.json"
+
+    with pytest.raises(LookupError):
+        cfg.save_calibration_config("robot", "other", _so101_calibration(), robot_name="missing_arm")
+    assert not (Path(cfg.FOLLOWER_CONFIG_PATH) / "other.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda c: c.pop("wrist_roll"), "no entry for 'wrist_roll'"),
+        (lambda c: c["elbow_flex"].update(id=9), "expected 3"),
+        (lambda c: c["gripper"].update(range_min=3300), "range_min >= range_max"),
+        (lambda c: c["wrist_flex"].update(homing_offset="12"), "wrist_flex.homing_offset"),
+        (lambda c: c["wrist_flex"].update(drive_mode=True), "wrist_flex.drive_mode"),
+    ],
+)
+def test_save_calibration_config_rejects_invalid_calibrations(tmp_lerobot_home: Path, mutate, message) -> None:
+    from lelab.utils import config as cfg
+
+    calibration = _so101_calibration()
+    mutate(calibration)
+    with pytest.raises(ValueError, match=message):
+        cfg.save_calibration_config("robot", "bad", calibration)
+
+
+@pytest.mark.parametrize(("device_type", "name"), [("arm", "ok"), ("robot", "../escape"), ("robot", "")])
+def test_save_calibration_config_rejects_bad_target(tmp_lerobot_home: Path, device_type: str, name: str) -> None:
+    from lelab.utils import config as cfg
+
+    with pytest.raises(ValueError):
+        cfg.save_calibration_config(device_type, name, _so101_calibration())

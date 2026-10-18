@@ -437,6 +437,84 @@ def save_robot_record(name: str, data: dict, allow_create: bool = True) -> bool:
     return True
 
 
+# SO-101 motor name -> bus id, the layout every calibration file must match.
+SO101_MOTOR_IDS = {
+    "shoulder_pan": 1,
+    "shoulder_lift": 2,
+    "elbow_flex": 3,
+    "wrist_flex": 4,
+    "wrist_roll": 5,
+    "gripper": 6,
+}
+_CALIBRATION_FIELDS = ("id", "drive_mode", "homing_offset", "range_min", "range_max")
+
+
+def validate_so101_calibration(data: object) -> dict[str, dict[str, int]]:
+    """Check a calibration in lerobot's JSON layout for the SO-101 and return it
+    with only the known motors and fields, in lerobot's key order.
+
+    Raises ValueError with a user-facing message when it doesn't fit.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("Calibration must be a JSON object")
+    result: dict[str, dict[str, int]] = {}
+    for motor, motor_id in SO101_MOTOR_IDS.items():
+        entry = data.get(motor)
+        if not isinstance(entry, dict):
+            raise ValueError(f"Calibration has no entry for '{motor}'")
+        for field in _CALIBRATION_FIELDS:
+            value = entry.get(field)
+            # bool is an int subclass; a JSON true/false is not a valid value here.
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"Calibration entry '{motor}.{field}' is missing or not an integer")
+        if entry["id"] != motor_id:
+            raise ValueError(f"Calibration entry '{motor}' has id {entry['id']}, expected {motor_id}")
+        if entry["range_min"] >= entry["range_max"]:
+            raise ValueError(f"Calibration entry '{motor}' has range_min >= range_max")
+        result[motor] = {field: entry[field] for field in _CALIBRATION_FIELDS}
+    return result
+
+
+def save_calibration_config(
+    device_type: str,
+    name: str,
+    calibration: object,
+    overwrite: bool = False,
+    robot_name: str | None = None,
+) -> None:
+    """Store an SO-101 calibration made outside this app (browser mode's
+    in-page calibration) as `<name>.json`, so it is used like one calibrated here.
+
+    `device_type` is "robot" (follower) or "teleop" (leader). When `robot_name`
+    is given, that robot record's config field for this side points at the new
+    file, as a calibration run from the robot's tile does.
+
+    Raises ValueError for bad input, FileExistsError if the file exists and
+    `overwrite` is False, and LookupError if `robot_name` has no record.
+    """
+    if device_type == "robot":
+        directory, record_field = FOLLOWER_CONFIG_PATH, "follower_config"
+    elif device_type == "teleop":
+        directory, record_field = LEADER_CONFIG_PATH, "leader_config"
+    else:
+        raise ValueError("Invalid device type")
+    if not is_valid_robot_name(name):
+        raise ValueError("Invalid configuration name")
+    if robot_name is not None and get_robot_record(robot_name) is None:
+        raise LookupError(f"Robot '{robot_name}' not found")
+
+    validated = validate_so101_calibration(calibration)
+    path = os.path.join(directory, f"{name}.json")
+    if os.path.exists(path) and not overwrite:
+        raise FileExistsError(path)
+    # Same layout as lerobot's draccus dump (indent 4).
+    _atomic_write_text(path, json.dumps(validated, indent=4))
+    logger.info(f"Saved imported calibration config: {path}")
+
+    if robot_name is not None:
+        save_robot_record(robot_name, {record_field: f"{name}.json"}, allow_create=False)
+
+
 def delete_robot_record(name: str) -> bool:
     """Delete a robot record. Returns True if a file was removed."""
     if not is_valid_robot_name(name):

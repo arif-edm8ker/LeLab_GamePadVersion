@@ -1,12 +1,13 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, Circle, Download, Gamepad2, Info, Play, Settings, Trash2, Upload } from "lucide-react";
+import { CheckCircle, Circle, Download, Gamepad2, Info, Play, Send, Settings, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import BrowserModeLayout from "@/components/browser/BrowserModeLayout";
 import GamepadPanel from "@/components/browser/GamepadPanel";
+import SendToAppDialog from "@/components/browser/SendToAppDialog";
 import {
   StoredCalibration,
   deleteCalibration,
@@ -31,6 +32,7 @@ const CalibrationCard: React.FC<{
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
+  const [sendOpen, setSendOpen] = useState(false);
   const { title, hint } = ARM_LABELS[device];
   const supported = webSerialSupport().ok;
 
@@ -91,6 +93,10 @@ const CalibrationCard: React.FC<{
               <Download className="w-4 h-4 mr-1.5" />
               Download
             </Button>
+            <Button size="sm" variant="secondary" onClick={() => setSendOpen(true)}>
+              <Send className="w-4 h-4 mr-1.5" />
+              Send to installed app
+            </Button>
             <Button
               size="sm"
               variant="ghost"
@@ -107,6 +113,7 @@ const CalibrationCard: React.FC<{
         )}
         <input ref={fileInput} type="file" accept=".json,application/json" className="hidden" onChange={handleImport} />
       </div>
+      {stored && <SendToAppDialog open={sendOpen} onOpenChange={setSendOpen} device={device} stored={stored} />}
     </div>
   );
 };
@@ -124,8 +131,8 @@ const BrowserHome = () => {
         <AlertDescription>
           Nothing to install: this page talks to the arm and controller directly over USB, in Chrome or Edge on a
           desktop computer. Calibration and teleoperation work here. Recording datasets, training and running
-          policies need the installed LeLab app. Calibrations are kept in this browser; download them to reuse
-          them in the installed app.
+          policies need the installed LeLab app. Calibrations are kept in this browser; use "Send to installed
+          app" to reuse one there.
         </AlertDescription>
       </Alert>
 

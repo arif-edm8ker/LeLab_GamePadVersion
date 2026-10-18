@@ -96,6 +96,7 @@ from .utils.config import (
     is_robot_record_clean,
     is_valid_robot_name,
     list_robot_records,
+    save_calibration_config,
     save_robot_port,
     save_robot_record,
 )
@@ -921,6 +922,31 @@ def delete_calibration_config(device_type: str, config_name: str):
     except Exception as e:
         logger.error(f"Error deleting calibration config: {e}")
         return {"success": False, "message": str(e)}
+
+
+@app.put("/calibration-configs/{device_type}/{config_name}")
+def put_calibration_config(
+    device_type: str,
+    config_name: str,
+    calibration: dict,
+    overwrite: bool = False,
+    robot_name: str | None = None,
+):
+    """Store a calibration made in browser mode (the page calibrates the arm
+    over Web Serial) so this app can use it, optionally attaching it to a robot."""
+    try:
+        save_calibration_config(
+            device_type, config_name, calibration, overwrite=overwrite, robot_name=robot_name
+        )
+    except FileExistsError:
+        return {
+            "success": False,
+            "exists": True,
+            "message": f"A configuration named '{config_name}' already exists",
+        }
+    except (ValueError, LookupError) as e:
+        return {"success": False, "message": str(e)}
+    return {"success": True, "message": f"Configuration '{config_name}' saved"}
 
 
 # ============================================================================

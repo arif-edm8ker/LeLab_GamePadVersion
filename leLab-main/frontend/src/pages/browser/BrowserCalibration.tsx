@@ -66,7 +66,7 @@ const BrowserCalibration = () => {
     toast({
       title: "Calibration saved",
       description: stored
-        ? "Saved in this browser. Download it to use it in the installed app."
+        ? "Saved in this browser. To use it in the installed app, send it from the browser mode page."
         : "This browser wouldn't store it; download the file to keep it.",
       variant: stored ? undefined : "destructive",
     });
