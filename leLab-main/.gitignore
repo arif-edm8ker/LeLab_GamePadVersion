@@ -71,3 +71,6 @@ HTTPS_SETUP.md
 
 # Self-signed dev certs (regenerate per HTTPS_SETUP.md)
 certs/
+
+# PM2 ecosystem config
+ecosystem.config.js
