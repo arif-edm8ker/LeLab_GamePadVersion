@@ -31,7 +31,16 @@ interface UrdfViewerElement extends HTMLElement {
   setJointValue?: (jointName: string, value: number) => void;
 }
 
-const UrdfViewer: React.FC = () => {
+interface UrdfViewerProps {
+  /**
+   * Joint values (URDF joint name -> radians) supplied by the page itself, as
+   * browser-mode teleoperation does. When set, the backend joint WebSocket is
+   * not used; `null` means no data yet.
+   */
+  liveJoints?: Record<string, number> | null;
+}
+
+const UrdfViewer: React.FC<UrdfViewerProps> = ({ liveJoints }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightedJoint, setHighlightedJoint] = useState<string | null>(null);
   const { registerUrdfProcessor, alternativeUrdfModels, isDefaultModel } =
@@ -41,11 +50,27 @@ const UrdfViewer: React.FC = () => {
   const viewerRef = useRef<URDFViewerElement | null>(null);
   const hasInitializedRef = useRef<boolean>(false);
 
+  const usesLiveJoints = liveJoints !== undefined;
+
   // Real-time joint updates via WebSocket
   const { isConnected: isWebSocketConnected } = useRealTimeJoints({
     viewerRef,
-    enabled: isDefaultModel, // Only enable WebSocket for default model
+    enabled: isDefaultModel && !usesLiveJoints, // Only enable WebSocket for default model
   });
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!liveJoints || !viewer || typeof viewer.setJointValue !== "function") return;
+    for (const [jointName, value] of Object.entries(liveJoints)) {
+      try {
+        viewer.setJointValue(jointName, value);
+      } catch (error) {
+        console.warn(`Failed to set joint ${jointName}:`, error);
+      }
+    }
+  }, [liveJoints]);
+
+  const isReceivingJoints = usesLiveJoints ? !!liveJoints : isWebSocketConnected;
 
   // Add state for custom URDF path
   const [customUrdfPath, setCustomUrdfPath] = useState<string | null>(null);
@@ -283,17 +308,17 @@ const UrdfViewer: React.FC = () => {
         <div className="absolute top-4 right-4 z-10">
           <div
             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-mono ${
-              isWebSocketConnected
+              isReceivingJoints
                 ? "bg-green-900/70 text-green-300"
                 : "bg-red-900/70 text-red-300"
             }`}
           >
             <div
               className={`w-2 h-2 rounded-full ${
-                isWebSocketConnected ? "bg-green-400" : "bg-red-400"
+                isReceivingJoints ? "bg-green-400" : "bg-red-400"
               }`}
             />
-            {isWebSocketConnected ? "Live Robot Data" : "Disconnected"}
+            {isReceivingJoints ? "Live Robot Data" : "Disconnected"}
           </div>
         </div>
       )}

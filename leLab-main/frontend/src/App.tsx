@@ -12,6 +12,9 @@ import Training from "@/pages/Training";
 import Inference from "@/pages/Inference";
 import EditDataset from "@/pages/EditDataset";
 import Upload from "@/pages/Upload";
+import BrowserHome from "@/pages/browser/BrowserHome";
+import BrowserCalibration from "@/pages/browser/BrowserCalibration";
+import BrowserTeleoperation from "@/pages/browser/BrowserTeleoperation";
 
 import NotFound from "@/pages/NotFound";
 import SingleTabGuard from "@/components/SingleTabGuard";
@@ -46,6 +49,9 @@ function App() {
                         <Route path="/inference" element={<Inference />} />
                         <Route path="/calibration" element={<Calibration />} />
                         <Route path="/edit-dataset" element={<EditDataset />} />
+                        <Route path="/browser" element={<BrowserHome />} />
+                        <Route path="/browser/calibration" element={<BrowserCalibration />} />
+                        <Route path="/browser/teleoperation" element={<BrowserTeleoperation />} />
 
                         <Route path="*" element={<NotFound />} />
                       </Routes>

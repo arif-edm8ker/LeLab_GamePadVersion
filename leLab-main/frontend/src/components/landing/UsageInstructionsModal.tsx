@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Terminal, ExternalLink, Copy, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Terminal, ExternalLink, Copy, Check, Usb } from "lucide-react";
 
 const ONE_LINER =
   "uv tool install git+https://github.com/huggingface/leLab.git && lelab";
@@ -25,6 +26,7 @@ const UsageInstructionsModal: React.FC<UsageInstructionsModalProps> = ({
   dismissible = true,
 }) => {
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   const blockClose = (e: Event) => {
     if (!dismissible) e.preventDefault();
@@ -99,6 +101,20 @@ const UsageInstructionsModal: React.FC<UsageInstructionsModalProps> = ({
               Open LeLab GamePad Version
             </a>
           </Button>
+          <div className="border-t border-gray-700 pt-4 space-y-2">
+            <p className="text-gray-400 text-sm text-center">
+              Or skip the install: calibrate and teleoperate straight from
+              this page in Chrome or Edge.
+            </p>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => navigate("/browser")}
+            >
+              <Usb className="w-4 h-4 mr-2" />
+              Try in your browser (no install)
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
