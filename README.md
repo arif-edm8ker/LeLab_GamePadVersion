@@ -334,6 +334,11 @@ lelab-gamepad --stop
 
 then start again. This frees both ports if a previous run didn't shut down cleanly.
 
+If another program on your machine needs those ports, move LeLab to different ones instead: copy
+`leLab-main/.env.example` to `leLab-main/.env` (with an installed copy, create a `.env` in the
+folder you run `lelab-gamepad` from) and set `LELAB_BACKEND_PORT` and/or
+`LELAB_FRONTEND_DEV_PORT`. Then open `http://localhost:<your backend port>` instead of `:8000`.
+
 ### Still stuck
 
 Check the terminal window LeLab is running in: errors are logged there with a full description,

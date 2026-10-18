@@ -18,6 +18,9 @@ LeLab launcher.
 Default mode starts FastAPI on :8000 and serves the committed frontend/dist
 bundle from the same process. Dev mode starts Vite on :8080 and uvicorn
 --reload on :8000.
+
+Both ports can be changed with LELAB_BACKEND_PORT / LELAB_FRONTEND_DEV_PORT,
+set in the environment or in a .env file (see .env.example).
 """
 
 from __future__ import annotations
@@ -40,6 +43,7 @@ from typing import NoReturn
 
 import psutil
 import uvicorn
+from dotenv import dotenv_values
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -49,6 +53,7 @@ FRONTEND_PATH = PROJECT_ROOT / "frontend"
 FRONTEND_DIST = FRONTEND_PATH / "dist"
 FRONTEND_NODE_MODULES = FRONTEND_PATH / "node_modules"
 HOST = "127.0.0.1"
+# Defaults; main() applies LELAB_BACKEND_PORT / LELAB_FRONTEND_DEV_PORT.
 BACKEND_PORT = 8000
 FRONTEND_DEV_PORT = 8080
 
@@ -56,6 +61,38 @@ FRONTEND_DEV_PORT = 8080
 def _fail(message: str) -> NoReturn:
     logger.error(message)
     raise SystemExit(1)
+
+
+def _load_env_files() -> None:
+    """Fill in LELAB_* settings missing from the environment from a .env file:
+    first one in the current directory (for an installed `lelab-gamepad`), then
+    one in the project root (a source checkout's leLab-main/, which Vite reads
+    too). Only LELAB_* keys are taken, so an unrelated project's .env in the
+    current directory can't change anything else LeLab reads, like HF_TOKEN.
+    """
+    for path in (Path.cwd() / ".env", PROJECT_ROOT / ".env"):
+        if not path.is_file():
+            continue
+        for key, value in dotenv_values(path).items():
+            if key.startswith("LELAB_") and value is not None:
+                os.environ.setdefault(key, value)
+
+
+def _port_setting(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    port = int(raw) if raw.isdigit() else 0
+    if not 1 <= port <= 65535:
+        _fail(f"{name} must be a port number between 1 and 65535, got {raw!r}.")
+    return port
+
+
+def _configure_ports() -> None:
+    global BACKEND_PORT, FRONTEND_DEV_PORT
+    _load_env_files()
+    BACKEND_PORT = _port_setting("LELAB_BACKEND_PORT", BACKEND_PORT)
+    FRONTEND_DEV_PORT = _port_setting("LELAB_FRONTEND_DEV_PORT", FRONTEND_DEV_PORT)
 
 
 def _is_port_open(port: int, host: str = HOST) -> bool:
@@ -86,14 +123,14 @@ def _find_lelab_pids() -> dict[int, str]:
     """PIDs that look like a running LeLab dev backend/frontend, with a reason.
 
     On Windows the uvicorn --reload worker inherits the listening socket from
-    its supervisor, so the OS attributes :8000 to a PID that may already be
+    its supervisor, so the OS attributes the backend port to a PID that may already be
     gone — neither the global connection table nor `taskkill` finds the live
     holder. So match three independent signals and stay scoped to LeLab so we
     never touch unrelated dev servers:
       1. cmdline runs `uvicorn ... lelab.server`  (the reload supervisor / prod)
       2. an orphaned reload worker (`multiprocessing.spawn`) whose cwd is this
          project
-      3. anything actually LISTENING on :8000 / :8080  (per-process scan, which
+      3. anything actually LISTENING on the backend / Vite dev port  (per-process scan, which
          is more reliable than the global table on Windows)
     """
     me = os.getpid()
@@ -126,7 +163,7 @@ def _find_lelab_pids() -> dict[int, str]:
 
 
 def _run_stop() -> None:
-    """Stop a running LeLab and free :8000 / :8080.
+    """Stop a running LeLab and free the backend and Vite dev ports.
 
     The escape hatch for when a previous run left an orphaned Vite or uvicorn
     process holding the ports.
@@ -253,7 +290,7 @@ def _terminate_tree(pid: int, timeout: int = 5) -> None:
     Dev mode's children are themselves process trees (npm.cmd -> node -> vite,
     and uvicorn --reload -> reloader -> worker). Signalling only the direct
     child leaves the grandchildren orphaned on Windows, where they keep holding
-    ports 8000/8080 and block the next launch. Walk the whole tree instead.
+    LeLab's ports and block the next launch. Walk the whole tree instead.
     """
     try:
         parent = psutil.Process(pid)
@@ -381,6 +418,8 @@ def _run_prod(*, no_open: bool = False, rebuild: bool = False) -> None:
 
 def _run_dev(*, no_open: bool = False) -> None:
     """Start Vite HMR plus uvicorn reload."""
+    if BACKEND_PORT == FRONTEND_DEV_PORT:
+        _fail(f"LELAB_BACKEND_PORT and LELAB_FRONTEND_DEV_PORT are both {BACKEND_PORT}; they must differ.")
     _ensure_frontend_path()
     _require_command("node")
     _require_command("npm")
@@ -446,7 +485,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dev",
         action="store_true",
-        help="Start Vite hot reload on :8080 plus uvicorn --reload on :8000.",
+        help=f"Start Vite hot reload on :{FRONTEND_DEV_PORT} plus uvicorn --reload on :{BACKEND_PORT}.",
     )
     parser.add_argument(
         "--rebuild",
@@ -461,12 +500,13 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--stop",
         action="store_true",
-        help="Stop a running LeLab (free ports 8000/8080) and exit.",
+        help=f"Stop a running LeLab (free ports {BACKEND_PORT}/{FRONTEND_DEV_PORT}) and exit.",
     )
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    _configure_ports()
     parser = _build_parser()
     args = parser.parse_args(argv)
 

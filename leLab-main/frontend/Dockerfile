@@ -28,11 +28,20 @@ RUN npm ci
 # Copy the entire viewer directory (owned by node)
 COPY --chown=node:node . .
 
+# Backend port the hosted page connects to on the user's machine (default
+# 8000). Pass --build-arg LELAB_BACKEND_PORT=... to change it.
+ARG LELAB_BACKEND_PORT
+
 # Build the application
 RUN npm run build
+
+# Port `vite preview` serves on (read by vite.config.ts). It must match
+# app_port in README.md's Space metadata; override with -e when running the
+# image elsewhere.
+ENV LELAB_PREVIEW_PORT=7860
 
 # Expose port
 EXPOSE 7860
 
 # Start the application
-CMD ["npm", "run", "preview", "--", "--port", "7860", "--host"]
+CMD ["npm", "run", "preview", "--", "--host"]

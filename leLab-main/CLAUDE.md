@@ -25,6 +25,8 @@ lelab-gamepad          # uvicorn on :8000, serves built frontend at /, opens bro
 lelab-gamepad --dev    # spawns Vite dev (:8080) + uvicorn --reload (:8000), opens browser to :8080
 ```
 
+Ports are configurable with `LELAB_BACKEND_PORT`, `LELAB_FRONTEND_DEV_PORT` and `LELAB_PREVIEW_PORT`, from the environment or a `.env` next to `pyproject.toml` (see [.env.example](.env.example)); the launcher and [vite.config.ts](frontend/vite.config.ts) both read it. The built frontend calls the API on its own origin, so changing the backend port needs no rebuild.
+
 The console script is named `lelab-gamepad`, not `lelab`, so this fork can be installed and run side by side with upstream LeLab (same package name otherwise, `LeLab`, would collide with it on PATH). See [pyproject.toml](pyproject.toml)'s `[project.scripts]`.
 
 When `frontend/**` (excluding `frontend/dist/**`) changes on `main`, [`.github/workflows/build_frontend.yml`](.github/workflows/build_frontend.yml) auto-rebuilds `frontend/dist/` and commits it back. You can still build locally before committing if you want to test the production bundle, but it's no longer required. `lelab-gamepad --dev` serves directly from Vite, no rebuild needed.

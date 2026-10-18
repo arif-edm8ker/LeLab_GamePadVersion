@@ -436,3 +436,144 @@ def test_dev_launcher_reports_frontend_exit_before_ready(
 
     assert "Frontend exited early with code 7" in caplog.text
     assert "Check the Vite output above" in caplog.text
+
+
+_PORT_VARS = ("LELAB_BACKEND_PORT", "LELAB_FRONTEND_DEV_PORT", "HF_TOKEN")
+
+
+def _isolated_port_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Point the launcher's .env lookup at empty tmp dirs and clear the port
+    variables; monkeypatch restores the environment and module ports after."""
+    import lelab.scripts.lelab as launcher
+
+    for name in _PORT_VARS:
+        # setenv first records the original value, so the variables the
+        # launcher sets during the test are removed again afterwards.
+        monkeypatch.setenv(name, "")
+        monkeypatch.delenv(name)
+    monkeypatch.setattr(launcher, "BACKEND_PORT", launcher.BACKEND_PORT)
+    monkeypatch.setattr(launcher, "FRONTEND_DEV_PORT", launcher.FRONTEND_DEV_PORT)
+    project, cwd = tmp_path / "project", tmp_path / "cwd"
+    project.mkdir()
+    cwd.mkdir()
+    monkeypatch.setattr(launcher, "PROJECT_ROOT", project)
+    monkeypatch.chdir(cwd)
+    return launcher, project, cwd
+
+
+def test_ports_default_without_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    launcher, _project, _cwd = _isolated_port_settings(monkeypatch, tmp_path)
+
+    launcher._configure_ports()
+
+    assert (launcher.BACKEND_PORT, launcher.FRONTEND_DEV_PORT) == (8000, 8080)
+
+
+def test_ports_come_from_project_env_file_and_only_lelab_keys_load(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    import os
+
+    launcher, project, _cwd = _isolated_port_settings(monkeypatch, tmp_path)
+    (project / ".env").write_text(
+        "LELAB_BACKEND_PORT=9100\nLELAB_FRONTEND_DEV_PORT=9200\nHF_TOKEN=should-not-load\n"
+    )
+
+    launcher._configure_ports()
+
+    assert (launcher.BACKEND_PORT, launcher.FRONTEND_DEV_PORT) == (9100, 9200)
+    assert "HF_TOKEN" not in os.environ
+
+
+def test_port_settings_precedence_shell_then_cwd_then_project(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    launcher, project, cwd = _isolated_port_settings(monkeypatch, tmp_path)
+    (project / ".env").write_text("LELAB_BACKEND_PORT=9100\nLELAB_FRONTEND_DEV_PORT=9200\n")
+    (cwd / ".env").write_text("LELAB_BACKEND_PORT=9101\nLELAB_FRONTEND_DEV_PORT=9201\n")
+    monkeypatch.setenv("LELAB_FRONTEND_DEV_PORT", "9302")
+
+    launcher._configure_ports()
+
+    assert (launcher.BACKEND_PORT, launcher.FRONTEND_DEV_PORT) == (9101, 9302)
+
+
+@pytest.mark.parametrize("value", ["abc", "0", "70000", "-1", "80.5"])
+def test_invalid_port_setting_exits_with_message(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture, value: str
+) -> None:
+    launcher, _project, _cwd = _isolated_port_settings(monkeypatch, tmp_path)
+    monkeypatch.setenv("LELAB_BACKEND_PORT", value)
+
+    with pytest.raises(SystemExit):
+        launcher._configure_ports()
+
+    assert "LELAB_BACKEND_PORT must be a port number between 1 and 65535" in caplog.text
+
+
+def test_help_shows_configured_ports(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    launcher, _project, _cwd = _isolated_port_settings(monkeypatch, tmp_path)
+    monkeypatch.setenv("LELAB_BACKEND_PORT", "9100")
+    monkeypatch.setenv("LELAB_FRONTEND_DEV_PORT", "9200")
+
+    with pytest.raises(SystemExit):
+        launcher.main(["--help"])
+
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "Vite hot reload on :9200 plus uvicorn --reload on :9100" in help_text
+    assert "free ports 9100/9200" in help_text
+
+
+def test_dev_launcher_uses_configured_ports(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import lelab.scripts.lelab as launcher
+
+    frontend = tmp_path / "frontend"
+    frontend.mkdir()
+    started: list[list[str]] = []
+    opened: list[str] = []
+
+    def fake_start_process(name, command, cwd, env=None):
+        started.append(list(command))
+        return FakeProcess()
+
+    def stop_after_start(_processes):
+        raise SystemExit(0)
+
+    monkeypatch.setattr(launcher, "BACKEND_PORT", 9100)
+    monkeypatch.setattr(launcher, "FRONTEND_DEV_PORT", 9200)
+    monkeypatch.setattr(launcher, "FRONTEND_PATH", frontend)
+    monkeypatch.setattr(launcher, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(launcher, "_require_command", lambda _command: _command)
+    monkeypatch.setattr(launcher, "_ensure_port_available", lambda _name, _port: None)
+    monkeypatch.setattr(launcher, "_ensure_frontend_deps", lambda: None)
+    monkeypatch.setattr(launcher, "_wait_for_port", lambda _port, timeout=30: True)
+    monkeypatch.setattr(launcher, "_start_process", fake_start_process)
+    monkeypatch.setattr(launcher, "_open_browser_url", lambda url, no_open: opened.append(url))
+    monkeypatch.setattr(launcher, "_install_signal_handlers", lambda: None)
+    monkeypatch.setattr(launcher, "_monitor_processes", stop_after_start)
+
+    with pytest.raises(SystemExit):
+        launcher._run_dev(no_open=True)
+
+    assert started[0][-2:] == ["--port", "9200"]
+    assert started[1][started[1].index("--port") + 1] == "9100"
+    assert opened == ["http://localhost:9200/?api=http://localhost:9100"]
+
+
+def test_dev_launcher_refuses_equal_ports(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    import lelab.scripts.lelab as launcher
+
+    monkeypatch.setattr(launcher, "BACKEND_PORT", 9000)
+    monkeypatch.setattr(launcher, "FRONTEND_DEV_PORT", 9000)
+
+    with pytest.raises(SystemExit):
+        launcher._run_dev(no_open=True)
+
+    assert "LELAB_BACKEND_PORT and LELAB_FRONTEND_DEV_PORT are both 9000" in caplog.text

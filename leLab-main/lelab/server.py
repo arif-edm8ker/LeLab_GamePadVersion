@@ -144,8 +144,9 @@ _FLAVOR_CACHE_TTL_SECONDS = 300.0
 
 app = FastAPI()
 
-# In dev mode the React app runs on :8080 while the API runs on :8000; in
-# prod they share an origin and CORS is unnecessary. allow_credentials with
+# In dev mode the React app runs on the Vite dev port (default :8080) while
+# the API runs on the backend port (default :8000); in prod they share an
+# origin and CORS is unnecessary. allow_credentials with
 # a wildcard origin is rejected by browsers, so we drop it.
 app.add_middleware(
     CORSMiddleware,

@@ -9,10 +9,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Terminal, ExternalLink, Copy, Check, Usb } from "lucide-react";
+import { LOCAL_BACKEND_URL } from "@/lib/backendUrl";
 
 const ONE_LINER =
   "uv tool install git+https://github.com/huggingface/leLab.git && lelab";
-const LOCAL_URL = "http://localhost:8000/";
+const LOCAL_URL = `${LOCAL_BACKEND_URL}/`;
 
 interface UsageInstructionsModalProps {
   open: boolean;

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode, useState, useCallback, useMemo } from "react";
+import { LOCAL_BACKEND_URL, defaultApiBaseUrl } from "@/lib/backendUrl";
 
 interface ApiContextType {
   baseUrl: string;
@@ -9,12 +10,11 @@ interface ApiContextType {
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
 
 const STORAGE_KEY = "lelab.apiBaseUrl";
-const DEFAULT_LOCALHOST = "http://localhost:8000";
 
 const httpToWs = (url: string): string => url.replace(/^http(s?):/, "ws$1:");
 
 const resolveInitialBaseUrl = (): string => {
-  if (typeof window === "undefined") return DEFAULT_LOCALHOST;
+  if (typeof window === "undefined") return LOCAL_BACKEND_URL;
 
   const fromQuery = new URLSearchParams(window.location.search).get("api");
   if (fromQuery) {
@@ -28,7 +28,7 @@ const resolveInitialBaseUrl = (): string => {
     }
   }
 
-  return window.localStorage.getItem(STORAGE_KEY) || DEFAULT_LOCALHOST;
+  return window.localStorage.getItem(STORAGE_KEY) || defaultApiBaseUrl();
 };
 
 export const ApiProvider: React.FC<{ children: ReactNode }> = ({
