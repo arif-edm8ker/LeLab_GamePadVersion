@@ -1,0 +1,958 @@
+{
+  "packets": {
+    "ping_id1": [
+      255,
+      255,
+      1,
+      2,
+      1,
+      251
+    ],
+    "read_id1_present_position": [
+      255,
+      255,
+      1,
+      4,
+      2,
+      56,
+      2,
+      190
+    ],
+    "write_id3_homing_offset_neg100": [
+      255,
+      255,
+      3,
+      5,
+      3,
+      31,
+      100,
+      8,
+      105
+    ],
+    "write_id6_torque_enable_1": [
+      255,
+      255,
+      6,
+      4,
+      3,
+      40,
+      1,
+      201
+    ],
+    "sync_read_present_position_ids1to6": [
+      255,
+      255,
+      254,
+      10,
+      130,
+      56,
+      2,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      38
+    ],
+    "sync_write_goal_position_ids1to6": [
+      255,
+      255,
+      254,
+      22,
+      131,
+      42,
+      2,
+      1,
+      255,
+      7,
+      2,
+      232,
+      3,
+      3,
+      184,
+      11,
+      4,
+      0,
+      0,
+      5,
+      255,
+      15,
+      6,
+      196,
+      9,
+      152
+    ],
+    "sync_write_goal_position_values": {
+      "1": 2047,
+      "2": 1000,
+      "3": 3000,
+      "4": 0,
+      "5": 4095,
+      "6": 2500
+    }
+  },
+  "normalization": {
+    "calibration": {
+      "shoulder_pan": {
+        "id": 1,
+        "drive_mode": 0,
+        "homing_offset": -1024,
+        "range_min": 758,
+        "range_max": 3292
+      },
+      "shoulder_lift": {
+        "id": 2,
+        "drive_mode": 0,
+        "homing_offset": 1215,
+        "range_min": 816,
+        "range_max": 3205
+      },
+      "elbow_flex": {
+        "id": 3,
+        "drive_mode": 0,
+        "homing_offset": -1530,
+        "range_min": 885,
+        "range_max": 3080
+      },
+      "wrist_flex": {
+        "id": 4,
+        "drive_mode": 0,
+        "homing_offset": 128,
+        "range_min": 841,
+        "range_max": 3157
+      },
+      "wrist_roll": {
+        "id": 5,
+        "drive_mode": 0,
+        "homing_offset": -7,
+        "range_min": 168,
+        "range_max": 3994
+      },
+      "gripper": {
+        "id": 6,
+        "drive_mode": 0,
+        "homing_offset": 1987,
+        "range_min": 2025,
+        "range_max": 3478
+      }
+    },
+    "cases": [
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 0,
+        "out": -178.02197802197801
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 500,
+        "out": -134.06593406593407
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 758,
+        "out": -111.38461538461539
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 2047,
+        "out": 1.934065934065934
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 2048,
+        "out": 2.021978021978022
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 3292,
+        "out": 111.38461538461539
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 3500,
+        "out": 129.67032967032966
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "normalize",
+        "in": 4095,
+        "out": 181.97802197802199
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": -180.0,
+        "out": -22
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": -95.5,
+        "out": 938
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": -12.34,
+        "out": 1884
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": 0.0,
+        "out": 2025
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": 0.4,
+        "out": 2029
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": 33.333,
+        "out": 2404
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": 99.9,
+        "out": 3161
+      },
+      {
+        "motor": "shoulder_pan",
+        "op": "unnormalize",
+        "in": 150.0,
+        "out": 3731
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 0,
+        "out": -176.74725274725276
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 500,
+        "out": -132.7912087912088
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 758,
+        "out": -110.10989010989012
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 2047,
+        "out": 3.208791208791209
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 2048,
+        "out": 3.2967032967032965
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 3292,
+        "out": 112.65934065934066
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 3500,
+        "out": 130.94505494505495
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "normalize",
+        "in": 4095,
+        "out": 183.25274725274724
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": -180.0,
+        "out": -37
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": -95.5,
+        "out": 924
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": -12.34,
+        "out": 1870
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": 0.0,
+        "out": 2010
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": 0.4,
+        "out": 2015
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": 33.333,
+        "out": 2389
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": 99.9,
+        "out": 3146
+      },
+      {
+        "motor": "shoulder_lift",
+        "op": "unnormalize",
+        "in": 150.0,
+        "out": 3716
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 0,
+        "out": -174.28571428571428
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 500,
+        "out": -130.32967032967034
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 758,
+        "out": -107.64835164835165
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 2047,
+        "out": 5.670329670329671
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 2048,
+        "out": 5.758241758241758
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 3292,
+        "out": 115.12087912087912
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 3500,
+        "out": 133.4065934065934
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "normalize",
+        "in": 4095,
+        "out": 185.71428571428572
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": -180.0,
+        "out": -65
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": -95.5,
+        "out": 896
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": -12.34,
+        "out": 1842
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": 0.0,
+        "out": 1982
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": 0.4,
+        "out": 1987
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": 33.333,
+        "out": 2361
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": 99.9,
+        "out": 3118
+      },
+      {
+        "motor": "elbow_flex",
+        "op": "unnormalize",
+        "in": 150.0,
+        "out": 3688
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 0,
+        "out": -175.73626373626374
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 500,
+        "out": -131.78021978021977
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 758,
+        "out": -109.0989010989011
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 2047,
+        "out": 4.21978021978022
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 2048,
+        "out": 4.3076923076923075
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 3292,
+        "out": 113.67032967032966
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 3500,
+        "out": 131.95604395604394
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "normalize",
+        "in": 4095,
+        "out": 184.26373626373626
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": -180.0,
+        "out": -48
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": -95.5,
+        "out": 912
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": -12.34,
+        "out": 1858
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": 0.0,
+        "out": 1999
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": 0.4,
+        "out": 2003
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": 33.333,
+        "out": 2378
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": 99.9,
+        "out": 3135
+      },
+      {
+        "motor": "wrist_flex",
+        "op": "unnormalize",
+        "in": 150.0,
+        "out": 3705
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 0,
+        "out": -182.94505494505495
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 500,
+        "out": -138.98901098901098
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 758,
+        "out": -116.3076923076923
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 2047,
+        "out": -2.989010989010989
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 2048,
+        "out": -2.901098901098901
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 3292,
+        "out": 106.46153846153847
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 3500,
+        "out": 124.74725274725274
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "normalize",
+        "in": 4095,
+        "out": 177.05494505494505
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": -180.0,
+        "out": 33
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": -95.5,
+        "out": 994
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": -12.34,
+        "out": 1940
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": 0.0,
+        "out": 2081
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": 0.4,
+        "out": 2085
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": 33.333,
+        "out": 2460
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": 99.9,
+        "out": 3217
+      },
+      {
+        "motor": "wrist_roll",
+        "op": "unnormalize",
+        "in": 150.0,
+        "out": 3787
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 0,
+        "out": 0.0
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 500,
+        "out": 0.0
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 758,
+        "out": 0.0
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 2047,
+        "out": 1.5141087405368203
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 2048,
+        "out": 1.5829318651066757
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 3292,
+        "out": 87.19889883000688
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 3500,
+        "out": 100.0
+      },
+      {
+        "motor": "gripper",
+        "op": "normalize",
+        "in": 4095,
+        "out": 100.0
+      },
+      {
+        "motor": "gripper",
+        "op": "unnormalize",
+        "in": -5.0,
+        "out": 2025
+      },
+      {
+        "motor": "gripper",
+        "op": "unnormalize",
+        "in": 0.0,
+        "out": 2025
+      },
+      {
+        "motor": "gripper",
+        "op": "unnormalize",
+        "in": 12.5,
+        "out": 2206
+      },
+      {
+        "motor": "gripper",
+        "op": "unnormalize",
+        "in": 50.0,
+        "out": 2751
+      },
+      {
+        "motor": "gripper",
+        "op": "unnormalize",
+        "in": 99.99,
+        "out": 3477
+      },
+      {
+        "motor": "gripper",
+        "op": "unnormalize",
+        "in": 100.0,
+        "out": 3478
+      },
+      {
+        "motor": "gripper",
+        "op": "unnormalize",
+        "in": 120.0,
+        "out": 3478
+      }
+    ],
+    "half_turn_homings": {
+      "positions": {
+        "shoulder_pan": 1000,
+        "shoulder_lift": 1300,
+        "elbow_flex": 1600,
+        "wrist_flex": 1900,
+        "wrist_roll": 2200,
+        "gripper": 2500
+      },
+      "homings": {
+        "shoulder_pan": -1047,
+        "shoulder_lift": -747,
+        "elbow_flex": -447,
+        "wrist_flex": -147,
+        "wrist_roll": 153,
+        "gripper": 453
+      }
+    }
+  },
+  "sign_magnitude": {
+    "cases": [
+      {
+        "bit": 11,
+        "value": 0,
+        "encoded": 0,
+        "decoded": 0
+      },
+      {
+        "bit": 11,
+        "value": 1,
+        "encoded": 1,
+        "decoded": 1
+      },
+      {
+        "bit": 11,
+        "value": -1,
+        "encoded": 2049,
+        "decoded": -1
+      },
+      {
+        "bit": 11,
+        "value": 2047,
+        "encoded": 2047,
+        "decoded": 2047
+      },
+      {
+        "bit": 11,
+        "value": -2047,
+        "encoded": 4095,
+        "decoded": -2047
+      },
+      {
+        "bit": 11,
+        "value": -1024,
+        "encoded": 3072,
+        "decoded": -1024
+      },
+      {
+        "bit": 11,
+        "value": 300,
+        "encoded": 300,
+        "decoded": 300
+      },
+      {
+        "bit": 15,
+        "value": 0,
+        "encoded": 0,
+        "decoded": 0
+      },
+      {
+        "bit": 15,
+        "value": 5,
+        "encoded": 5,
+        "decoded": 5
+      },
+      {
+        "bit": 15,
+        "value": -5,
+        "encoded": 32773,
+        "decoded": -5
+      },
+      {
+        "bit": 15,
+        "value": 32767,
+        "encoded": 32767,
+        "decoded": 32767
+      },
+      {
+        "bit": 15,
+        "value": -32767,
+        "encoded": 65535,
+        "decoded": -32767
+      },
+      {
+        "bit": 15,
+        "value": 4095,
+        "encoded": 4095,
+        "decoded": 4095
+      }
+    ]
+  },
+  "calibration_json": "{\n    \"shoulder_pan\": {\n        \"id\": 1,\n        \"drive_mode\": 0,\n        \"homing_offset\": -1024,\n        \"range_min\": 758,\n        \"range_max\": 3292\n    },\n    \"shoulder_lift\": {\n        \"id\": 2,\n        \"drive_mode\": 0,\n        \"homing_offset\": 1215,\n        \"range_min\": 816,\n        \"range_max\": 3205\n    },\n    \"elbow_flex\": {\n        \"id\": 3,\n        \"drive_mode\": 0,\n        \"homing_offset\": -1530,\n        \"range_min\": 885,\n        \"range_max\": 3080\n    },\n    \"wrist_flex\": {\n        \"id\": 4,\n        \"drive_mode\": 0,\n        \"homing_offset\": 128,\n        \"range_min\": 841,\n        \"range_max\": 3157\n    },\n    \"wrist_roll\": {\n        \"id\": 5,\n        \"drive_mode\": 0,\n        \"homing_offset\": -7,\n        \"range_min\": 168,\n        \"range_max\": 3994\n    },\n    \"gripper\": {\n        \"id\": 6,\n        \"drive_mode\": 0,\n        \"homing_offset\": 1987,\n        \"range_min\": 2025,\n        \"range_max\": 3478\n    }\n}",
+  "gamepad": {
+    "scenarios": [
+      {
+        "axes": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -1.0,
+          -1.0
+        ],
+        "dpad": 0,
+        "dt": 0.02,
+        "start": {
+          "shoulder_pan": 0.0,
+          "shoulder_lift": 95.0,
+          "elbow_flex": -98.0,
+          "wrist_flex": 10.0,
+          "wrist_roll": -20.0,
+          "gripper": 3.0
+        },
+        "out": {
+          "shoulder_pan": 0.0,
+          "shoulder_lift": 95.0,
+          "elbow_flex": -98.0,
+          "wrist_flex": 10.0,
+          "wrist_roll": -20.0,
+          "gripper": 3.0
+        }
+      },
+      {
+        "axes": [
+          0.07,
+          -0.079,
+          0.19,
+          0.08,
+          -1.0,
+          -1.0
+        ],
+        "dpad": 0,
+        "dt": 0.02,
+        "start": {
+          "shoulder_pan": 0.0,
+          "shoulder_lift": 95.0,
+          "elbow_flex": -98.0,
+          "wrist_flex": 10.0,
+          "wrist_roll": -20.0,
+          "gripper": 3.0
+        },
+        "out": {
+          "shoulder_pan": 0.0,
+          "shoulder_lift": 95.0,
+          "elbow_flex": -98.064,
+          "wrist_flex": 10.0,
+          "wrist_roll": -20.0,
+          "gripper": 3.0
+        }
+      },
+      {
+        "axes": [
+          1.0,
+          -1.0,
+          0.5,
+          -0.5,
+          -1.0,
+          1.0
+        ],
+        "dpad": 1,
+        "dt": 0.02,
+        "start": {
+          "shoulder_pan": 0.0,
+          "shoulder_lift": 95.0,
+          "elbow_flex": -98.0,
+          "wrist_flex": 10.0,
+          "wrist_roll": -20.0,
+          "gripper": 3.0
+        },
+        "out": {
+          "shoulder_pan": 0.8,
+          "shoulder_lift": 95.8,
+          "elbow_flex": -97.6,
+          "wrist_flex": 9.2,
+          "wrist_roll": -20.6,
+          "gripper": 1.8
+        }
+      },
+      {
+        "axes": [
+          -0.6,
+          0.3,
+          -0.25,
+          0.9,
+          1.0,
+          -1.0
+        ],
+        "dpad": -1,
+        "dt": 0.033,
+        "start": {
+          "shoulder_pan": 0.0,
+          "shoulder_lift": 95.0,
+          "elbow_flex": -98.0,
+          "wrist_flex": 10.0,
+          "wrist_roll": -20.0,
+          "gripper": 3.0
+        },
+        "out": {
+          "shoulder_pan": -0.792,
+          "shoulder_lift": 94.604,
+          "elbow_flex": -99.188,
+          "wrist_flex": 11.32,
+          "wrist_roll": -19.505,
+          "gripper": 4.98
+        }
+      },
+      {
+        "axes": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0
+        ],
+        "dpad": 0,
+        "dt": 5.0,
+        "start": {
+          "shoulder_pan": 0.0,
+          "shoulder_lift": 95.0,
+          "elbow_flex": -98.0,
+          "wrist_flex": 10.0,
+          "wrist_roll": -20.0,
+          "gripper": 3.0
+        },
+        "out": {
+          "shoulder_pan": 100.0,
+          "shoulder_lift": -5.0,
+          "elbow_flex": -100.0,
+          "wrist_flex": 10.0,
+          "wrist_roll": -100.0,
+          "gripper": 3.0
+        }
+      }
+    ]
+  }
+}
