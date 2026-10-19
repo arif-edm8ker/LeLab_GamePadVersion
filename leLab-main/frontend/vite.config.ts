@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: portSetting(env, "LELAB_FRONTEND_DEV_PORT", 8080),
+      allowedHosts: ['staging-lelab.edm8ker.com', 'staging-lelab-server.edm8ker.com']
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(
       Boolean
