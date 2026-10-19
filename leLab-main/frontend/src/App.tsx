@@ -15,6 +15,7 @@ import Upload from "@/pages/Upload";
 import BrowserHome from "@/pages/browser/BrowserHome";
 import BrowserCalibration from "@/pages/browser/BrowserCalibration";
 import BrowserTeleoperation from "@/pages/browser/BrowserTeleoperation";
+import BrowserInference from "@/pages/browser/BrowserInference";
 
 import NotFound from "@/pages/NotFound";
 import SingleTabGuard from "@/components/SingleTabGuard";
@@ -52,6 +53,7 @@ function App() {
                         <Route path="/browser" element={<BrowserHome />} />
                         <Route path="/browser/calibration" element={<BrowserCalibration />} />
                         <Route path="/browser/teleoperation" element={<BrowserTeleoperation />} />
+                        <Route path="/browser/inference" element={<BrowserInference />} />
 
                         <Route path="*" element={<NotFound />} />
                       </Routes>

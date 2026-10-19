@@ -10,6 +10,8 @@ export interface PolicyConfigSummary {
   policy_type: string | null;
   image_features: Record<string, { height: number; width: number }>;
   requires_task: boolean;
+  /** Why browser mode can't run this policy, or null if it can. */
+  browser_blocker?: string | null;
 }
 
 export async function listJobCheckpoints(

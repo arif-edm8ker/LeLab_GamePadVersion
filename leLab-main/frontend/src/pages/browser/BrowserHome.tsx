@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, Circle, Download, Gamepad2, Info, Play, Send, Settings, Trash2, Upload } from "lucide-react";
+import { Bot, CheckCircle, Circle, Download, Gamepad2, Info, Play, Send, Settings, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -171,6 +171,29 @@ const BrowserHome = () => {
                 Start teleoperation
               </Button>
               {!follower && <p className="text-xs text-slate-500">Calibrate the follower arm first.</p>}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-800/60 border-slate-700">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-slate-200">
+                <Bot className="w-5 h-5 text-purple-400" />
+                3. Run a policy
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-slate-400">
+                Let a trained model drive the arm. The model runs on the LeLab server, which can be another
+                computer; the arm and cameras stay plugged into this one.
+              </p>
+              <Button
+                className="w-full bg-purple-600 hover:bg-purple-700 rounded-full py-5"
+                disabled={!supported || !follower}
+                onClick={() => navigate("/browser/inference")}
+              >
+                <Bot className="w-4 h-4 mr-2" />
+                Run a policy
+              </Button>
             </CardContent>
           </Card>
 

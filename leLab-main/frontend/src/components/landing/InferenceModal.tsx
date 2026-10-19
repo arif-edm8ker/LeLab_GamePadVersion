@@ -433,6 +433,19 @@ const InferenceModal: React.FC<Props> = ({
             )}
           </div>
 
+          <p className="text-sm text-gray-400 text-center">
+            Arm plugged into this computer rather than the one running LeLab?{" "}
+            <button
+              type="button"
+              className="text-blue-400 hover:text-blue-300 underline"
+              onClick={() =>
+                navigate(`/browser/inference?job=${encodeURIComponent(jobId)}${selectedStep != null ? `&step=${selectedStep}` : ""}`)
+              }
+            >
+              Run it in this browser
+            </button>
+          </p>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button
               onClick={handleStart}
