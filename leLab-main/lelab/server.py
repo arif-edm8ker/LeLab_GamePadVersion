@@ -38,6 +38,7 @@ from starlette.types import Scope
 
 # Import our custom recording functionality
 from . import datasets as dataset_browser, record as _record
+from .browser_inference import handle_browser_inference
 
 # Import our custom calibration functionality
 from .calibrate import CalibrationRequest, calibration_manager
@@ -401,6 +402,24 @@ def datasets_list():
 def websocket_test():
     """Test endpoint to verify WebSocket support"""
     return {"websocket_endpoint": "/ws/joint-data", "status": "available"}
+
+
+def _checkpoint_ref(job_id: str, step: int) -> str:
+    """Policy ref of one of this server's training-job checkpoints."""
+    try:
+        checkpoints = job_registry.list_checkpoints(job_id)
+    except JobNotFoundError as exc:
+        raise LookupError(f"Job {job_id!r} not found") from exc
+    match = next((c for c in checkpoints if c.step == step), None)
+    if match is None:
+        raise LookupError(f"Job {job_id!r} has no checkpoint at step {step}")
+    return match.ref
+
+
+@app.websocket("/ws/browser-inference")
+async def browser_inference_websocket(websocket: WebSocket):
+    """Run a checkpoint for an arm the browser drives (see lelab/browser_inference.py)."""
+    await handle_browser_inference(websocket, _checkpoint_ref)
 
 
 @app.websocket("/ws/joint-data")

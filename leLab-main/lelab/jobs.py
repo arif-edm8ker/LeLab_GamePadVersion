@@ -38,6 +38,7 @@ from typing import Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
+from .browser_inference import browser_inference_blocker
 from .train import TrainingRequest
 
 logger = logging.getLogger(__name__)
@@ -1094,6 +1095,8 @@ class JobRegistry:
             "policy_type": policy_type,
             "image_features": image_features,
             "requires_task": policy_type in _LANGUAGE_CONDITIONED_POLICY_TYPES,
+            # Why browser mode can't run it (None if it can).
+            "browser_blocker": browser_inference_blocker(cfg),
         }
 
     def delete(self, job_id: str) -> None:
