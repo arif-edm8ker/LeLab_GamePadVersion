@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, Gamepad2, Loader2, Play, Square, Usb, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import UrdfViewer from "@/components/UrdfViewer";
 import BrowserModeLayout from "@/components/browser/BrowserModeLayout";
+import PortPicker from "@/components/browser/PortPicker";
 import { loadCalibration } from "@/lib/robot/calibrationStore";
-import { requestArmPort, webSerialSupport } from "@/lib/robot/support";
+import { webSerialSupport } from "@/lib/robot/support";
 import { BrowserTeleop, INITIAL_TELEOP_STATE, TeleopInput, TeleopState } from "@/lib/robot/teleopSession";
 
 const ACTIVE_PHASES = new Set(["connecting", "running", "stopping"]);
@@ -24,36 +24,6 @@ const GAMEPAD_CONTROLS: [string, string][] = [
   ["Triangle / Y", "Return to the starting pose"],
   ["Circle / B", "Stop teleoperation"],
 ];
-
-const PortPicker: React.FC<{
-  label: string;
-  port: SerialPort | null;
-  disabled: boolean;
-  onPick: (port: SerialPort) => void;
-}> = ({ label, port, disabled, onPick }) => {
-  const { toast } = useToast();
-  const pick = async () => {
-    try {
-      const picked = await requestArmPort();
-      if (picked) onPick(picked);
-    } catch (e) {
-      toast({
-        title: "Couldn't open the port chooser",
-        description: e instanceof Error ? e.message : String(e),
-        variant: "destructive",
-      });
-    }
-  };
-  return (
-    <div className="flex items-center gap-3">
-      <Button variant="secondary" onClick={pick} disabled={disabled} className="shrink-0">
-        <Usb className="w-4 h-4 mr-2" />
-        {label}
-      </Button>
-      <span className={`text-sm ${port ? "text-green-300" : "text-slate-500"}`}>{port ? "Selected" : "Not selected"}</span>
-    </div>
-  );
-};
 
 const BrowserTeleoperation = () => {
   const supported = webSerialSupport().ok;

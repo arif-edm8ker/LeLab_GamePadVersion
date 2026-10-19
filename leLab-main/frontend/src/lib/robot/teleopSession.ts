@@ -5,7 +5,7 @@
 import { FeetechBus } from "./feetechBus";
 import { GAMEPAD_FPS, GamepadTeleop, pickGamepad } from "./gamepadTeleop";
 import { CalibrationFile } from "./normalization";
-import { configureFollower, configureLeader, openSo101Bus, toUrdfJoints } from "./so101";
+import { configureFollower, configureLeader, connectSo101, toUrdfJoints } from "./so101";
 
 export type TeleopInput = "gamepad" | "leader";
 export type TeleopPhase = "idle" | "connecting" | "running" | "stopping" | "stopped" | "error";
@@ -53,17 +53,6 @@ const VIEWER_INTERVAL_MS = 50;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-async function connectArm(port: SerialPort, calibration: CalibrationFile, label: string): Promise<FeetechBus> {
-  const bus = await openSo101Bus(port, calibration);
-  try {
-    await bus.connect();
-  } catch (e) {
-    await bus.disconnect(false).catch(() => undefined);
-    throw new Error(`Could not connect to the ${label}: ${errorMessage(e)}`);
-  }
-  return bus;
-}
-
 export class BrowserTeleop {
   private follower: FeetechBus | null = null;
   private leader: FeetechBus | null = null;
@@ -98,12 +87,12 @@ export class BrowserTeleop {
     try {
       this.set({ ...INITIAL_TELEOP_STATE, phase: "connecting", message: "Connecting to the arm..." });
       // Same order as the backend: buses, then calibration, then motor configuration.
-      this.follower = await connectArm(this.opts.followerPort, this.opts.followerCalibration, "follower arm");
+      this.follower = await connectSo101(this.opts.followerPort, this.opts.followerCalibration, "follower arm");
       if (input === "leader") {
         if (!this.opts.leaderPort || !this.opts.leaderCalibration) {
           throw new Error("Leader mode needs a leader port and calibration.");
         }
-        this.leader = await connectArm(this.opts.leaderPort, this.opts.leaderCalibration, "leader arm");
+        this.leader = await connectSo101(this.opts.leaderPort, this.opts.leaderCalibration, "leader arm");
       }
       await this.follower.writeCalibration(this.opts.followerCalibration);
       if (this.leader && this.opts.leaderCalibration) await this.leader.writeCalibration(this.opts.leaderCalibration);

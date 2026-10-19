@@ -44,6 +44,22 @@ export async function openSo101Bus(port: SerialPort, calibration: CalibrationFil
   return new FeetechBus(transport, SO101_MOTORS, calibration);
 }
 
+/** Open and handshake an arm; on failure the port is closed again and the error names the arm. */
+export async function connectSo101(
+  port: SerialPort,
+  calibration: CalibrationFile,
+  label: string
+): Promise<FeetechBus> {
+  const bus = await openSo101Bus(port, calibration);
+  try {
+    await bus.connect();
+  } catch (e) {
+    await bus.disconnect(false).catch(() => undefined);
+    throw new Error(`Could not connect to the ${label}: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  return bus;
+}
+
 /** SOFollower.configure: position mode, softer PID, gripper torque limits; torque on at the end. */
 export async function configureFollower(bus: FeetechBus): Promise<void> {
   await bus.disableTorque();
