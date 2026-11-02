@@ -21,7 +21,7 @@ import time
 from pathlib import Path
 from typing import Literal
 
-from lerobot.utils.constants import HF_LEROBOT_HOME
+from lerobot.utils.constants import HF_LEROBOT_CALIBRATION, HF_LEROBOT_HOME
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +33,12 @@ RobotSide = Literal["leader", "follower"]
 # live. A hardcoded ~/.cache/huggingface path here would silently diverge from
 # lerobot's own save location on any machine with HF_HOME set elsewhere,
 # leaving lelab unable to find calibration it just watched lerobot save.
+# Calibration paths use HF_LEROBOT_CALIBRATION (HF_LEROBOT_HOME/calibration
+# unless that env var is set), which is the root lerobot saves calibration to.
 
 # Define the calibration config paths (shared between features)
-CALIBRATION_BASE_PATH_TELEOP = str(HF_LEROBOT_HOME / "calibration" / "teleoperators")
-CALIBRATION_BASE_PATH_ROBOTS = str(HF_LEROBOT_HOME / "calibration" / "robots")
+CALIBRATION_BASE_PATH_TELEOP = str(HF_LEROBOT_CALIBRATION / "teleoperators")
+CALIBRATION_BASE_PATH_ROBOTS = str(HF_LEROBOT_CALIBRATION / "robots")
 LEADER_CONFIG_PATH = os.path.join(CALIBRATION_BASE_PATH_TELEOP, "so_leader")
 FOLLOWER_CONFIG_PATH = os.path.join(CALIBRATION_BASE_PATH_ROBOTS, "so_follower")
 
