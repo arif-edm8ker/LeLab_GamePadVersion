@@ -438,7 +438,14 @@ def test_dev_launcher_reports_frontend_exit_before_ready(
     assert "Check the Vite output above" in caplog.text
 
 
-_PORT_VARS = ("LELAB_BACKEND_PORT", "LELAB_FRONTEND_DEV_PORT", "HF_TOKEN")
+_PORT_VARS = (
+    "LELAB_BACKEND_PORT",
+    "LELAB_FRONTEND_DEV_PORT",
+    "HF_TOKEN",
+    "HF_HOME",
+    "HF_LEROBOT_HOME",
+    "HF_LEROBOT_CALIBRATION",
+)
 
 
 def _isolated_port_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
@@ -483,6 +490,21 @@ def test_ports_come_from_project_env_file_and_only_lelab_keys_load(
 
     assert (launcher.BACKEND_PORT, launcher.FRONTEND_DEV_PORT) == (9100, 9200)
     assert "HF_TOKEN" not in os.environ
+
+
+def test_hf_data_paths_load_from_env_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    import os
+
+    launcher, project, _cwd = _isolated_port_settings(monkeypatch, tmp_path)
+    (project / ".env").write_text(
+        "HF_HOME=/data/hf\nHF_LEROBOT_HOME=/data/lerobot\nHF_LEROBOT_CALIBRATION=/data/calibration\n"
+    )
+
+    launcher._configure_ports()
+
+    assert os.environ["HF_HOME"] == "/data/hf"
+    assert os.environ["HF_LEROBOT_HOME"] == "/data/lerobot"
+    assert os.environ["HF_LEROBOT_CALIBRATION"] == "/data/calibration"
 
 
 def test_port_settings_precedence_shell_then_cwd_then_project(

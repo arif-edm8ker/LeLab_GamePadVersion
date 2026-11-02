@@ -56,6 +56,8 @@ HOST = "127.0.0.1"
 # Defaults; main() applies LELAB_BACKEND_PORT / LELAB_FRONTEND_DEV_PORT.
 BACKEND_PORT = 8000
 FRONTEND_DEV_PORT = 8080
+# Where Hugging Face / lerobot keep their files; a .env may set these too.
+ENV_FILE_PATH_KEYS = ("HF_HOME", "HF_LEROBOT_HOME", "HF_LEROBOT_CALIBRATION")
 
 
 def _fail(message: str) -> NoReturn:
@@ -67,14 +69,19 @@ def _load_env_files() -> None:
     """Fill in LELAB_* settings missing from the environment from a .env file:
     first one in the current directory (for an installed `lelab-gamepad`), then
     one in the project root (a source checkout's leLab-main/, which Vite reads
-    too). Only LELAB_* keys are taken, so an unrelated project's .env in the
-    current directory can't change anything else LeLab reads, like HF_TOKEN.
+    too). Only LELAB_* keys and the data paths in ENV_FILE_PATH_KEYS are taken,
+    so an unrelated project's .env in the current directory can't change
+    anything else LeLab reads, like HF_TOKEN.
+
+    The path keys work because this runs before anything imports lerobot or
+    huggingface_hub, which read them once at import (uvicorn imports
+    lelab.server later, and the --dev backend inherits os.environ).
     """
     for path in (Path.cwd() / ".env", PROJECT_ROOT / ".env"):
         if not path.is_file():
             continue
         for key, value in dotenv_values(path).items():
-            if key.startswith("LELAB_") and value is not None:
+            if (key.startswith("LELAB_") or key in ENV_FILE_PATH_KEYS) and value is not None:
                 os.environ.setdefault(key, value)
 
 

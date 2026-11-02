@@ -25,7 +25,7 @@ lelab-gamepad          # uvicorn on :8000, serves built frontend at /, opens bro
 lelab-gamepad --dev    # spawns Vite dev (:8080) + uvicorn --reload (:8000), opens browser to :8080
 ```
 
-Ports are configurable with `LELAB_BACKEND_PORT`, `LELAB_FRONTEND_DEV_PORT` and `LELAB_PREVIEW_PORT`, from the environment or a `.env` next to `pyproject.toml` (see [.env.example](.env.example)); the launcher and [vite.config.ts](frontend/vite.config.ts) both read it. The built frontend calls the API on its own origin, so changing the backend port needs no rebuild.
+Ports are configurable with `LELAB_BACKEND_PORT`, `LELAB_FRONTEND_DEV_PORT` and `LELAB_PREVIEW_PORT`, from the environment or a `.env` next to `pyproject.toml` (see [.env.example](.env.example)); the launcher and [vite.config.ts](frontend/vite.config.ts) both read it. The built frontend calls the API on its own origin, so changing the backend port needs no rebuild. The launcher also takes the data paths `HF_HOME`, `HF_LEROBOT_HOME` and `HF_LEROBOT_CALIBRATION` from `.env` (no other non-`LELAB_` keys); it must load them before anything imports lerobot or huggingface_hub, which read them only at import.
 
 The console script is named `lelab-gamepad`, not `lelab`, so this fork can be installed and run side by side with upstream LeLab (same package name otherwise, `LeLab`, would collide with it on PATH). See [pyproject.toml](pyproject.toml)'s `[project.scripts]`.
 
